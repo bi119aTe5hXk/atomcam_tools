@@ -277,6 +277,9 @@ ONVIF:
   password:
     title: Password
     tooltip: Set ONVIF password
+  allEventsAsMotion:
+    title: Report all events as motion
+    tooltip: Also report sound and alarm-sound events as motion events for NVR compatibility.
   note:
     comment: |
       ONVIF uses the RTSP Main stream. Main RTSP will be enabled when settings are saved.

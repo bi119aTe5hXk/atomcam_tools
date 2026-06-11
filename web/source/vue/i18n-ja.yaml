@@ -278,6 +278,9 @@ ONVIF:
   password:
     title: パスワード
     tooltip: ONVIFのパスワードを設定します
+  allEventsAsMotion:
+    title: すべてのイベントをモーションとして通知
+    tooltip: NVR互換性のため、サウンド検出と警報音検出もモーションイベントとして通知します
   note:
     comment: |
       ONVIFはRTSP Mainを使用します。設定保存時にRTSP Mainをonにします。

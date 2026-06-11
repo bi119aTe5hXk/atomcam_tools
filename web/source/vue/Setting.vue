@@ -247,6 +247,7 @@
           <div v-if="config.ONVIF_ENABLE === 'on'">
             <SettingInput i18n="ONVIF.account" type="text" :titleOffset="2" v-model="config.ONVIF_USER" />
             <SettingInput i18n="ONVIF.password" type="password" :titleOffset="2" v-model="config.ONVIF_PASSWD" show-password />
+            <SettingSwitch i18n="ONVIF.allEventsAsMotion" :titleOffset="2" v-model="config.ONVIF_EVENT_ALL_AS_MOTION" />
           </div>
           <SettingComment v-if="config.ONVIF_ENABLE === 'on' && config.RTSP_VIDEO0 !== 'on'" i18n="ONVIF.note" color="red" weight="bold" />
 
@@ -463,6 +464,7 @@
           ONVIF_ENABLE: 'off',
           ONVIF_USER: '',
           ONVIF_PASSWD: '',
+          ONVIF_EVENT_ALL_AS_MOTION: 'on',
           HOMEKIT_ENABLE: 'off',
           HOMEKIT_SETUP_ID: '',
           HOMEKIT_DEVICE_ID: '',
@@ -1458,6 +1460,7 @@
            this.config.RTSP_PASSWD !== this.oldConfig.RTSP_PASSWD ||
            this.config.ONVIF_USER !== this.oldConfig.ONVIF_USER ||
            this.config.ONVIF_PASSWD !== this.oldConfig.ONVIF_PASSWD ||
+           this.config.ONVIF_EVENT_ALL_AS_MOTION !== this.oldConfig.ONVIF_EVENT_ALL_AS_MOTION ||
            this.config.RTSP_VIDEO0 !== this.oldConfig.RTSP_VIDEO0) {
           execCmds.push(`onvif ${this.config.ONVIF_ENABLE === 'on' ? 'restart' : 'off'}`);
         }

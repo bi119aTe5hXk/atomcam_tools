@@ -6,6 +6,7 @@ LOG_DIR=/tmp/log
 LOG=$LOG_DIR/onvif.log
 ONVIF_SERVER_LOG=$LOG_DIR/onvif_simple_server.log
 WSD_SERVER_LOG=$LOG_DIR/wsd_simple_server.log
+NOTIFY_SERVER_LOG=$LOG_DIR/onvif_notify_server.log
 WSD_PID=/var/run/wsd_simple_server.pid
 NOTIFY_PID=/var/run/onvif_notify_server.pid
 
@@ -40,8 +41,10 @@ stop_onvif()
     kill -15 `cat $NOTIFY_PID` > /dev/null 2>&1
     rm -f $NOTIFY_PID
   fi
+  /scripts/onvif_event.sh stop > /dev/null 2>&1
   killall wsd_simple_server > /dev/null 2>&1
   killall onvif_notify_server > /dev/null 2>&1
+  rm -f /dev/shm/onvif_subscription /dev/shm/sem.sub_mem_lock
 }
 
 if [ "$1" = "off" -o "$1" = "restart" ]; then
@@ -71,7 +74,8 @@ IFACE=$(active_if)
 mkdir -p $LOG_DIR
 mkdir -p /tmp/onvif_notify_server
 touch $LOG $ONVIF_SERVER_LOG $WSD_SERVER_LOG
-chmod 666 $LOG $ONVIF_SERVER_LOG $WSD_SERVER_LOG > /dev/null 2>&1
+touch $NOTIFY_SERVER_LOG
+chmod 666 $LOG $ONVIF_SERVER_LOG $WSD_SERVER_LOG $NOTIFY_SERVER_LOG > /dev/null 2>&1
 /scripts/rtspserver.sh on
 
 HOSTNAME=`hostname`
@@ -154,7 +158,7 @@ fi
     echo "jump_to_rel=/scripts/onvif_ptz.sh relative %f %f %f > /dev/null"
   fi
 
-  echo "events=1"
+  echo "events=3"
   echo "topic=tns1:VideoSource/MotionAlarm"
   echo "source_name=Source"
   echo "source_type=tt:ReferenceToken"
@@ -169,5 +173,8 @@ fi
 
 pidof wsd_simple_server > /dev/null || \
   /usr/bin/wsd_simple_server -i $IFACE -x "http://%s/onvif/device_service" -m "$MODEL" -n "ATOMTech" -p $WSD_PID -d 5 >> $LOG 2>&1
+pidof onvif_notify_server > /dev/null || \
+  /usr/bin/onvif_notify_server -c $CONF -p $NOTIFY_PID -d 5 >> $LOG 2>&1
+/scripts/onvif_event.sh start > /dev/null 2>&1
 
 log "onvif start on $IFACE"

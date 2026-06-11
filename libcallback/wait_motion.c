@@ -7,6 +7,7 @@
 #include <errno.h>
 #include <math.h>
 #include <unistd.h>
+#include <time.h>
 
 extern char CommandResBuf[];
 extern void CommandResponse(int fd, const char *res);
@@ -29,8 +30,17 @@ struct RectInfoSt {
 static int (*original_local_sdk_video_osd_update_rect)(int ch, int display, struct RectInfoSt *rectInfo);
 static int WaitMotionFd = -1;
 static int Timeout = -1;
+static time_t LastOnvifMotionTime = 0;
 static pthread_mutex_t WaitMotionMutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t WaitMotionCond = PTHREAD_COND_INITIALIZER;
+
+static void OnvifMotionEvent()
+{
+  time_t now = time(NULL);
+  if(now - LastOnvifMotionTime < 5) return;
+  LastOnvifMotionTime = now;
+  system("/scripts/onvif_event.sh trigger motion >/dev/null 2>&1 &");
+}
 
 char *WaitMotion(int fd, char *tokenPtr) {
 
@@ -53,6 +63,8 @@ char *WaitMotion(int fd, char *tokenPtr) {
 }
 
 int local_sdk_video_osd_update_rect(int ch, int display, struct RectInfoSt *rectInfo) {
+
+  if(!ch && display) OnvifMotionEvent();
 
   if(swing && (WaitMotionFd >= 0) && (MotorFd < 0) && !ch) {
     struct timeval tv;
