@@ -269,6 +269,19 @@ RTSP:
     title: パスワード
     tooltip: RTSPのパスワードを設定します
 
+ONVIF:
+  title: ONVIF
+  tooltip: ONVIF discoveryでRTSP Mainのstreamを公開します
+  account:
+    title: アカウント
+    tooltip: ONVIFのユーザー名を設定します
+  password:
+    title: パスワード
+    tooltip: ONVIFのパスワードを設定します
+  note:
+    comment: |
+      ONVIFはRTSP Mainを使用します。設定保存時にRTSP Mainをonにします。
+
 HomeKit:
   title: HomeKit
   tooltip: RTSP Mainをonにする必要があります
