@@ -196,8 +196,7 @@ endmenu
 menu "ONVIF"
 
 comment "ONVIF"
-	source "package/wsdd/Config.in"
-	source "package/onvif_srvd/Config.in"
+	source "package/onvif_simple_server/Config.in"
 
 endmenu
 

@@ -268,6 +268,19 @@ RTSP:
     title: Password
     tooltip: set RTSP password
 
+ONVIF:
+  title: ONVIF
+  tooltip: Publish the Main RTSP stream through ONVIF discovery.
+  account:
+    title: Account
+    tooltip: Set ONVIF username
+  password:
+    title: Password
+    tooltip: Set ONVIF password
+  note:
+    comment: |
+      ONVIF uses the RTSP Main stream. Main RTSP will be enabled when settings are saved.
+
 HomeKit:
   title: HomeKit
   tooltip: RTSP Main must be on.

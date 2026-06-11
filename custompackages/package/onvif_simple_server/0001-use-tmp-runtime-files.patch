@@ -1,0 +1,25 @@
+--- a/onvif_simple_server.c
++++ b/onvif_simple_server.c
+@@ -38,9 +38,9 @@
+ #include "utils.h"
+ #include "log.h"
+ 
+-#define DEFAULT_CONF_FILE "/etc/onvif_simple_server.conf"
++#define DEFAULT_CONF_FILE "/tmp/onvif_simple_server.conf"
+ #define DEFAULT_JSON_CONF_FILE "/etc/onvif_simple_server.json"
+-#define DEFAULT_LOG_FILE "/var/log/onvif_simple_server.log"
++#define DEFAULT_LOG_FILE "/tmp/log/onvif_simple_server.log"
+ #define DEBUG_FILE "/tmp/onvif_simple_server.debug"
+ 
+ #define ROTATION_LOG_LENGTH 3
+--- a/wsd_simple_server.c
++++ b/wsd_simple_server.c
+@@ -38,7 +38,7 @@
+ #define PORT 3702
+ #define TYPE "NetworkVideoTransmitter"
+ 
+-#define DEFAULT_LOG_FILE "/var/log/wsd_simple_server.log"
++#define DEFAULT_LOG_FILE "/tmp/log/wsd_simple_server.log"
+ #define DEFAULT_TEMPLATE_DIR "/etc/wsd_simple_server"
+ 
+ #define RECV_BUFFER_LEN 4096
