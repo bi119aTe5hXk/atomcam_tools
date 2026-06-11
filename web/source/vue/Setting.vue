@@ -39,7 +39,7 @@
             <div v-if="isSwing && posValid" class="image-frame-inner2">
               <ElSlider class="pan-slider" v-model="pan" :min="0" :max="355" :show-input-controls="false" @change="Move" @input="Move" />
             </div>
-            <div v-if="!rebooting" class="image-frame-inner3">
+            <div v-if="!drawerVisible" class="image-frame-inner3">
               <i class="el-icon-moon ir-led" />
               <ElButtonGroup>
                 <ElButton size="mini" type="primary" @click="NightVision('on')">
@@ -87,12 +87,20 @@
           <SettingSlider i18n="AdvancedSettings.sharpness" v-model="ISPSettings.sharp" :min="0" :max="255" :defaultValue="128" :stemp="1" @input="ISPSet('sharp')" />
           <SettingSlider i18n="AdvancedSettings.sinter" v-model="ISPSettings.sinter" :min="0" :max="255" :defaultValue="128" :stemp="1" @input="ISPSet('sinter')" />
           <SettingSlider i18n="AdvancedSettings.temper" v-model="ISPSettings.temper" :min="0" :max="255" :defaultValue="128" :stemp="1" @input="ISPSet('temper')" />
-          <SettingSlider i18n="AdvancedSettings.aecomp" v-model="ISPSettings.aecomp" :min="0" :max="255" :defaultValue="128" :stemp="1" @input="ISPSet('aecomp')" />
           <SettingSlider i18n="AdvancedSettings.dpc" v-model="ISPSettings.dpc" :min="0" :max="255" :defaultValue="128" :stemp="1" @input="ISPSet('dpc')" />
           <SettingSlider i18n="AdvancedSettings.drc" v-model="ISPSettings.drc" :min="0" :max="255" :defaultValue="128" :stemp="1" @input="ISPSet('drc')" />
           <SettingSlider i18n="AdvancedSettings.hilight" v-model="ISPSettings.hilight" :min="0" :max="10" :defaultValue="2" :stemp="1" @input="ISPSet('hilight')" />
           <SettingSlider i18n="AdvancedSettings.again" v-model="ISPSettings.again" :min="0" :max="255" :defaultValue="205" :stemp="1" @input="ISPSet('again')" />
           <SettingSlider i18n="AdvancedSettings.dgain" v-model="ISPSettings.dgain" :min="0" :max="255" :defaultValue="64" :stemp="1" @input="ISPSet('dgain')" />
+          <SettingSwitch i18n="AdvancedSettings.expmode" v-model="ISPSettings.expmode" :label="['auto', 'manual']" @input="ISPSet('expmode')" />
+          <div v-if="ISPSettings.expmode === 'auto'">
+            <SettingSlider i18n="AdvancedSettings.aecomp" v-model="ISPSettings.aecomp" :min="0" :max="255" :defaultValue="128" :stemp="1" @input="ISPSet('aecomp')" />
+            <SettingSlider i18n="AdvancedSettings.aeitmin" v-model="ISPSettings.aeitmin" :min="1" :max="ISPSettings.aeitmax" :defaultValue="1" :stemp="1" @input="ISPSet('aeitmin')" />
+            <SettingSlider i18n="AdvancedSettings.aeitmax" v-model="ISPSettings.aeitmax" :min="ISPSettings.aeitmin" :max="1683" :defaultValue="1683" :stemp="1" @input="ISPSet('aeitmax')" />
+          </div>
+          <div v-else>
+            <SettingSlider i18n="AdvancedSettings.expline" v-model="ISPSettings.expline" :min="1" :max="1683" :defaultValue="1200" :stemp="1" @input="ISPSet('expline')" />
+          </div>
 
           <div v-if="selectedTab === 'CameraSettings'">
             <div class="image-frame image-frame-camera-settings">
@@ -123,6 +131,9 @@
         <!-- SD-Card Tab -->
         <ElTabPane name="SDCard" class="well-transparent container-flex-no-submit" :label="$t('SDCard.tab')">
           <iframe ref="sdcardFrame" class="sdcard-frame" src="/sdcard" />
+          <div v-if="showMediaSize" class="media-size">
+            {{ $t('SDCard.remainingCapacity') }}: {{ Math.round(mediaAvailable / 1024 / 1024 * 10) / 10 }}GB / {{ Math.round(mediaSize / 1024 / 1024 * 10) / 10 }}GB
+          </div>
         </ElTabPane>
 
         <!-- Record Setting Tab -->
@@ -145,6 +156,7 @@
             <div v-if="config.PERIODICREC_SCHEDULE === 'on'">
               <SettingSchedule v-for="(timeTable, idx) of periodicRecSchedule" :key="'timetable'+idx" :timeRange="true" :removeSchedule="true" v-model="periodicRecSchedule[idx]" @add="AddSchedule('periodicRecSchedule')" @remove="DeleteSchedule('periodicRecSchedule', idx, 'PERIODICREC_SCHEDULE')" />
             </div>
+            <SettingSwitch i18n="record.skipJpeg" v-model="config.PERIODICREC_SKIP_JPEG" />
           </div>
 
           <h3 v-t="'record.alarmRec.title'" />
@@ -256,9 +268,10 @@
 
           <h3 v-t="'RTMP.title'" />
           <SettingSwitch i18n="RTMP" :value="(config.RTSP_VIDEO0 == 'on' && (config.RTSP_AUDIO0 == 'AAC' || config.RTSP_AUDIO0 == 'off')) ? config.RTMP_ENABLE : 'off'" @input="config.RTMP_ENABLE=$event" :disabled="config.RTSP_VIDEO0 !== 'on' || (config.RTSP_AUDIO0 !== 'AAC' && config.RTSP_AUDIO0 !== 'off')" />
-          <SettingInput v-if="config.RTMP_ENABLE === 'on'" i18n="RTMP.URL" :titleOffset="2" :span="8" v-model="config.RTMP_URL" placeholder="rtmp://<server addr>/<livekey>">
-            <ElButton @click="RTMPRestart" type="primary" v-t="'RTMP.Restart'" />
+          <SettingInput v-if="config.RTMP_ENABLE === 'on'" i18n="RTMP.URL" :titleOffset="2" :span="8" v-model="config.RTMP_URL" placeholder="rtmp://<server addr>/<livekey>" :disabled="config.RTSP_VIDEO0 !== 'on' || (config.RTSP_AUDIO0 !== 'AAC' && config.RTSP_AUDIO0 !== 'off')">
+            <ElButton @click="RTMPRestart" type="primary" v-t="'RTMP.Restart'" :disabled="config.RTSP_VIDEO0 !== 'on' || (config.RTSP_AUDIO0 !== 'AAC' && config.RTSP_AUDIO0 !== 'off')" />
           </SettingInput>
+          <SettingInputNumber v-if="config.RTMP_ENABLE === 'on' && config.RTSP_VIDEO0 == 'on' && (config.RTSP_AUDIO0 == 'AAC' || config.RTSP_AUDIO0 == 'off')" i18n="RTMP.IntervalRestart" :withSwitch="true" :defaultValue="240" :span="10" v-model="config.RTMP_RESTART" :min="20" :max="2880" :step="20" />
 
           <h3 v-t="'WebRTC.title'" />
           <SettingSwitch i18n="WebRTC" :value="(config.RTSP_VIDEO0 == 'on') ? config.WEBRTC_ENABLE : 'off'" @input="config.WEBRTC_ENABLE=$event" :disabled="config.RTSP_VIDEO0 !== 'on'" />
@@ -362,11 +375,9 @@
     <div v-if="selectedTabIndex >= 3" class="submit">
       <ElButton @click="Submit" type="primary" v-t="'submit'" />
     </div>
-    <ElDrawer :title="$t('updating.title')" :visible.sync="executing" direction="btt" :show-close="false" :wrapperClosable="false">
-      <h4 class="comment" v-t="'updating.comment'" />
-    </ElDrawer>
-    <ElDrawer :title="$t('rebooting.title')" :visible.sync="rebooting" direction="btt" :show-close="false" :wrapperClosable="false">
-      <h4 class="comment" v-t="{ path: 'rebooting.comment', args: { rebootTime: rebootTime } }" />
+    <ElDrawer :visible.sync="drawerVisible" direction="btt" :show-close="drawerClosable" :wrapperClosable="drawerClosable" :close-on-press-escape="drawerClosable" @closed="drawerClosable=false">
+      <h4 class="comment" v-t="drawerComment" />
+      <ElProgress v-if="progress >= 0" :show-text="false" :stroke-width="18" :percentage="progress" class="progress progress-striped" />
     </ElDrawer>
   </div>
 </template>
@@ -376,7 +387,7 @@
   axios.defaults.headers.post['Content-Type'] = 'application/json;charset=utf-8';
   axios.defaults.headers.post['Access-Control-Allow-Origin'] = '*';
   import md5 from 'js-md5';
-  import { Drawer, Slider, ButtonGroup, Tabs, TabPane } from 'element-ui';
+  import { Drawer, Slider, ButtonGroup, Tabs, TabPane, Progress } from 'element-ui';
   import SettingSwitch from './SettingSwitch.vue';
   import SettingSelect from './SettingSelect.vue';
   import SettingInput from './SettingInput.vue';
@@ -395,6 +406,7 @@
   import 'element-ui/lib/theme-chalk/button-group.css';
   import 'element-ui/lib/theme-chalk/tabs.css';
   import 'element-ui/lib/theme-chalk/tab-pane.css';
+  import 'element-ui/lib/theme-chalk/progress.css';
 
   export default {
     name: 'ATOMCamSetting',
@@ -404,6 +416,7 @@
       ElButtonGroup: ButtonGroup,
       ElTabs: Tabs,
       ElTabPane: TabPane,
+      ElProgress: Progress,
       SettingSwitch,
       SettingSelect,
       SettingInput,
@@ -446,6 +459,7 @@
           HOMEKIT_SOURCE: '',
           RTMP_ENABLE: 'off',
           RTMP_URL: '',
+          RTMP_RESTART: -60,
           WEBRTC_ENABLE: 'off',
           PERIODICREC_SDCARD: 'on',
           PERIODICREC_SDCARD_REMOVE: 'off',
@@ -456,6 +470,7 @@
           PERIODICREC_CIFS_REMOVE_DAYS: 30,
           PERIODICREC_SCHEDULE: 'off',
           PERIODICREC_SCHEDULE_LIST: '',
+          PERIODICREC_SKIP_JPEG: 'off',
           ALARMREC_SDCARD: 'on',
           ALARMREC_SDCARD_PATH: '%Y%m%d/%H%M%S',
           ALARMREC_SDCARD_REMOVE: 'off',
@@ -517,12 +532,16 @@
           sharp: 128,
           sinter: 128,
           temper: 128,
-          aecomp: 128,
           dpc: 128,
           drc: 128,
           hilight: 2,
           again: 205,
           dgain: 64,
+          aecomp: 128,
+          expmode: 'auto',
+          aeitmin: 1,
+          aeitmax: 1683,
+          expline: 1200,
         },
         loginAuth: 'off',
         loginAuth2: 'off',
@@ -568,11 +587,12 @@
           endTime: '02:00',
           dayOfWeekSelect: [6],
         },
-        rebootTime: 80,
         stillInterval: 500,
         latestVer: '',
-        executing: false,
-        rebooting: false,
+        drawerVisible: false,
+        drawerClosable: false,
+        drawerComment: '',
+        progress: -1,
         stillImage: null,
         pan: 0,
         tilt: 0,
@@ -584,6 +604,9 @@
         videoFlip: false,
         isDrag: false,
         watermarkUploaded: false,
+        mediaSize: 0,
+        mediaAvailable: 0,
+        showMediaSize: false,
       };
     },
     computed: {
@@ -618,7 +641,7 @@
         return false;
       },
       isSwing() {
-        return !this.rebooting && (this.config.PRODUCT_MODEL === 'ATOM_CAKP1JZJP');
+        return !this.drawerVisible && (this.config.PRODUCT_MODEL === 'ATOM_CAKP1JZJP');
       },
       RtspUrl0() {
         const port = (this.config.RTSP_OVER_HTTP  === 'on') ? 8080 : 8554;
@@ -673,7 +696,13 @@
       });
       (res2?.data ?? '').split('\n').forEach(l => {
         const name = l.split(/[ \t=]/)[0].trim();
-        if(this.ISPSettings[name] != null) this.$set(this.ISPSettings, name, l.replace(new RegExp(name + '[ \t=]*'), '').trim());
+        if(this.ISPSettings[name] != null) {
+          if(typeof(this.ISPSettings[name]) === 'number') {
+            this.$set(this.ISPSettings, name, parseInt(l.replace(new RegExp(name + '[ \t=]*'), '')));
+          } else {
+            this.$set(this.ISPSettings, name, l.replace(new RegExp(name + '[ \t=]*'), '').trim());
+          }
+        }
       });
       // eslint-disable-next-line no-console
       console.log('video isp', this.ISPSettings);
@@ -814,6 +843,11 @@
       }, {});
 
       this.latestVer = status.LATESTVER;
+      if(status.MEDIASIZE) {
+        const ms = status.MEDIASIZE.split(' ');
+        this.mediaSize = ms[1];
+        this.mediaAvailable = ms[0];
+      }
       if(status.MOTORPOS) {
         const pos = status.MOTORPOS.split(' ');
         this.pan = Math.round(parseFloat(pos[0]));
@@ -838,7 +872,7 @@
         });
         if(res === '') return;
         if(this.rebootStart && (new Date() > this.rebootStart)) {
-          this.rebooting = false;
+          this.drawerVisible = false;
           this.rebootStart = null;
           location.reload();
         }
@@ -847,6 +881,11 @@
           if(name) d[name] = l.replace(new RegExp(name + '[ \t=]*'), '').trim();
           return d;
         }, {});
+        if(this.intervalValue.MEDIASIZE) {
+          const ms = this.intervalValue.MEDIASIZE.split(' ');
+          this.mediaSize = ms[1];
+          this.mediaAvailable = ms[0];
+        }
         if(this.intervalValue.MOTORPOS) {
           const pos = this.intervalValue.MOTORPOS.split(' ');
           const pan = Math.round(parseFloat(pos[0]));
@@ -945,7 +984,7 @@
       },
       async GetCameraProperty() {
         const property = ((await this.Exec('property', 'socket')).data ?? '').split(/[\n\x00]/);
-        if(!property.length) return;
+        if(!property?.length) return;
         this.property = property.reduce((d, s) => {
           if(s.length && (s !== 'ok')) d[s.replace(/ *=.*$/, '')] = s.replace(/^.*= */, '');
           return d;
@@ -980,15 +1019,22 @@
         }, 1000);
       },
       async ISPSet(item) {
-        await this.Exec(`video ${item} ${this.ISPSettings[item]}`, 'socket');
         if(this.ispSettingsTimeoutID) clearTimeout(this.ispSettingsTimeoutID);
         this.ispSettingsTimeoutID = setTimeout(async () => {
-          this.ispSettingsTimeoutID = null;
+          if(['aeitmin', 'aeitmax', 'expmode', 'expline'].indexOf(item) >= 0) {
+            await this.Exec(`video expr ${this.ISPSettings.expmode} ${this.ISPSettings.expline} ${this.ISPSettings.aeitmin} ${this.ISPSettings.aeitmax}`, 'socket');
+          } else {
+            await this.Exec(`video ${item} ${this.ISPSettings[item]}`, 'socket');
+          }
+        }, 300);
+        if(this.ispSettingsFileTimeoutID) clearTimeout(this.ispSettingsFileTimeoutID);
+        this.ispSettingsFileTimeoutID = setTimeout(async () => {
+          this.ispSettingsFileTimeoutID = null;
           await axios.post('./cgi-bin/video_isp.cgi', this.ISPSettings).catch(err => {
             // eslint-disable-next-line no-console
             console.log('axios.post ./cgi-bin/video_isp.cgi', err);
           });
-        }, 1000);
+        }, 1500);
       },
       async CheckHomeKit() {
         if((this.oldConfig.HOMEKIT_ENABLE !== 'on') || (this.config.HOMEKIT_ENABLE !== 'on')) return;
@@ -1055,6 +1101,16 @@
         this.selectedTabIndex = parseInt(tab.index);
         if(this.selectedTab === 'CameraSettings') this.GetCameraProperty();
         if(this.selectedTab === 'maintenance') this.GetLatestVer();
+        if(this.selectedTab === 'SDCard') {
+          if(!this.sdcardIntervalID) this.sdcardIntervalID = setInterval(() => {
+            this.showMediaSize = this.$refs.sdcardFrame?.contentDocument?.title?.indexOf('Index of') === 0;
+          }, 500);
+        } else {
+          if(this.sdcardIntervalID) {
+            clearInterval(this.sdcardIntervalID);
+            this.sdcardIntervalID = null;
+          }
+        }
       },
       async Move() {
         if(!this.posValid || !this.moveDone) return;
@@ -1144,26 +1200,46 @@
         this.Exec('moveinit');
       },
       DoReboot() {
-        this.rebootTime = 80;
-        this.rebooting = true;
+        this.drawerComment = 'rebooting';
+        this.progress = -1;
+        this.drawerVisible = true;
         this.rebootStart = new Date();
         this.rebootStart.setSeconds(this.rebootStart.getSeconds() + 30);
         this.Exec('reboot');
       },
-      DoErase() {
-        this.executing = true;
-        this.Exec('sderase');
-        this.executing = false;
+      async DoErase() {
+        this.drawerComment = 'erasing';
+        this.progress = -1;
+        this.drawerVisible = true;
+        await this.Exec('sderase');
+        this.drawerVisible = false;
       },
       async DoUpdate() {
         await this.Submit();
-        this.rebootTime = 180;
-        this.rebooting = true;
-        this.rebootStart = new Date();
-        this.rebootStart.setSeconds(this.rebootStart.getSeconds() + 180);
+        this.drawerComment = 'downloading';
+        this.progress = 0;
+        this.drawerVisible = true;
+        this.updateTimeout = 30;
         await this.Exec('update');
-        this.rebootStart = new Date();
-        this.rebootStart.setSeconds(this.rebootStart.getSeconds() + 30);
+        const updateIntervalID = setInterval(async () => {
+          this.progress = parseInt(((await this.Exec('update_status'))?.data ?? '').replace(/^.* ([+-]*\d+) .*\n*$/, '$1'));
+          if(isNaN(this.progress)) {
+            this.updateTimeout--;
+            if(this.updateTimeout === 0) {
+              clearInterval(updateIntervalID);
+              this.drawerComment = 'downloadError';
+              this.progress = -1;
+              this.drawerClosable = true;
+            }
+          }
+          if(this.progress === 100) {
+            clearInterval(updateIntervalID);
+            this.drawerComment = 'rebooting';
+            this.progress = -1;
+            this.rebootStart = new Date();
+            this.rebootStart.setSeconds(this.rebootStart.getSeconds() + 30);
+          }
+        }, 1000);
       },
       UploadPNG(ev) {
         this.isDrag = false;
@@ -1177,7 +1253,7 @@
           await img.decode();
           const width = img.naturalWidth;
           const height = img.naturalHeight;
-          if((width > 500) || (height > 100)) return;
+          if((width > 500) || (height > 200)) return;
           const canvas = document.getElementById("watermark");
           canvas.width = width;
           canvas.height = height;
@@ -1316,6 +1392,9 @@
         if(parseInt(this.config.BITRATE_MAIN_HEVC) !== parseInt(this.oldConfig.BITRATE_MAIN_HEVC)) {
           execCmds.push(`bitrate 3 ${this.config.BITRATE_MAIN_HEVC < 0 ? 'auto' : this.config.BITRATE_MAIN_HEVC}`);
         }
+        if(parseInt(this.config.PERIODICREC_SKIP_JPEG) !== parseInt(this.oldConfig.PERIODICREC_SKIP_JPEG)) {
+          execCmds.push(`skipRecJpeg ${this.config.PERIODICREC_SKIP_JPEG}`);
+        }
         if(this.config.HOSTNAME !== this.oldConfig.HOSTNAME) {
           execCmds.push(`hostname ${this.config.HOSTNAME}`);
           if(window.location.host === `${this.oldConfig.HOSTNAME}.local`) {
@@ -1368,15 +1447,19 @@
 
         this.oldConfig = Object.assign({}, this.config);
         if(execCmds.length) {
-          this.executing = true;
+          this.drawerComment = 'executing';
+          this.progress = -1;
+          this.drawerVisible = true;
           this.$nextTick(async () => {
             for(const cmd of execCmds) {
               await this.Exec(cmd);
             }
-            if(execCmds.indexOf('lighttpd') >= 0) {
-              setTimeout(() => this.executing = false, 3000);
-            } else {
-              this.executing = false;
+            if(this.progress < 0) {
+              if(execCmds.indexOf('lighttpd') >= 0) {
+                setTimeout(() => this.drawerVisible = false, 3000);
+              } else {
+                this.drawerVisible = false;
+              }
             }
             if(href) window.location.href = href;
           });
@@ -1478,6 +1561,13 @@
     padding: 5px;
     display: flex;
     justify-content: flex-end;
+  }
+
+  .media-size {
+    font-size: 1.5em;
+    font-weight: 500;
+    position: fixed;
+    margin:20px;
   }
 
   .image-frame {
@@ -1659,12 +1749,12 @@
     border-radius: 5px;
     box-shadow: inset 0 1px 1px rgba(0,0,0,.05);
     width: 500px;
-    height: 100px;
+    height: 200px;
   }
 
   #watermark {
     width: 500px;
-    height: 100px;
+    height: 200px;
     border: solid 1px #999;
      background-image: linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%),
         linear-gradient(45deg, #ccc 25%, transparent 25%, transparent 75%, #ccc 75%);
@@ -1677,4 +1767,7 @@
     background-color: #f0f0f0;
   }
 
+  .progress {
+    padding: 0px 10vw;
+  }
 </style>

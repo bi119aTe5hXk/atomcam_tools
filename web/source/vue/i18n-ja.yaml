@@ -76,9 +76,6 @@ AdvancedSettings:
   temper:
     title: 3D-NR intensity
     tooltip: Set 3D noise reduction intensity.
-  aecomp:
-    title: AE compensation
-    tooltip: Setting AE compensation.
   dpc:
     title: DPC Strength
     tooltip: Set DPC Strength.
@@ -94,9 +91,28 @@ AdvancedSettings:
   dgain:
     title: Max Digital Gain
     tooltip: Set the Max value of sensor Digital gain.
+  expmode:
+    title: Exposure mode
+    tooltip: Setting the exposure mode.
+    text:
+      - auto
+      - manual
+  aecomp:
+    title: AE compensation
+    tooltip: Setting AE compensation.
+  aeitmin:
+    title: AE ITMin
+    tooltip: The min value of integration time, the unit is line.
+  aeitmax:
+    title: AE ITMax
+    tooltip: The max value of integration time, the unit is line.
+  expline:
+    title: Exposure line
+    tooltip: Setting Exposure integration line.
 
 SDCard:
   tab: SD Card
+  remainingCapacity: 空き容量
 
 record:
   tab: 録画設定
@@ -140,6 +156,9 @@ record:
     text:
       - 常時録画
       - スケジュール
+  skipJpeg:
+    title: JPEG記録の停止
+    tooltip: recordディレクトリへのJPEGファイルの記録を停止
 
 timelapse:
   tab: タイムラプス設定
@@ -267,6 +286,10 @@ RTMP:
     title: URL
     tooltip: 送信先のURLを設定してください
   Restart: restart
+  IntervalRestart:
+    title: 周期リスタート
+    unit: 分
+    tooltip: 定期的にRTMPを再スタートします
 
 WebRTC:
   title: WebRTC
@@ -407,7 +430,7 @@ watermark:
     title: ロゴ
     image:
       title: PNGイメージ
-      comment: PNGファイルを500px x 100px以内で作成してdropしてください。
+      comment: PNGファイルを500px x 200px以内で作成してdropしてください。
 
 maintenance:
   tab: メンテナンス
@@ -473,9 +496,8 @@ schedule:
     - 日
 
 submit: 設定
-updating:
-  title: 設定中
-  comment: 設定変更中。暫くお待ち下さい。
-rebooting:
-  title: 再起動中
-  comment: 起動するまで暫くお待ち下さい。(約{rebootTime}秒)
+executing: 設定変更中。暫くお待ち下さい。
+erasing: SD-Card消去中。暫くお待ちください。
+downloading: ダウンロード中。暫くお待ちください。
+downloadError: ダウンロードに失敗しました。少し時間をおいて再度実行してください。
+rebooting: 再起動中。起動するまで暫くお待ち下さい。(約80秒)

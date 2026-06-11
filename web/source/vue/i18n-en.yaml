@@ -76,9 +76,6 @@ AdvancedSettings:
   temper:
     title: 3D-NR intensity
     tooltip: Set 3D noise reduction intensity.
-  aecomp:
-    title: AE compensation
-    tooltip: Setting AE compensation.
   dpc:
     title: DPC Strength
     tooltip: Set DPC Strength.
@@ -94,9 +91,28 @@ AdvancedSettings:
   dgain:
     title: Max Digital Gain
     tooltip: Set the Max value of sensor Digital gain.
+  expmode:
+    title: Exposure mode
+    tooltip: Setting the exposure mode.
+    text:
+      - auto
+      - manual
+  aecomp:
+    title: AE compensation
+    tooltip: Setting AE compensation.
+  aeitmin:
+    title: AE ITMin
+    tooltip: The min value of integration time, the unit is line.
+  aeitmax:
+    title: AE ITMax
+    tooltip: The max value of integration time, the unit is line.
+  expline:
+    title: Exposure line
+    tooltip: Setting Exposure integration line.
 
 SDCard:
   title: SD Card
+  remainingCapacity: remaining capacity
 
 record:
   tab: Recording
@@ -140,6 +156,9 @@ record:
     text:
       - Schedule
       - Constant Recoring
+  skipJpeg:
+    title: Skip JPEG Recording
+    tooltip: Stop recording JPEG files to record directory
 
 timelapse:
   tab: Timelapse
@@ -266,6 +285,10 @@ RTMP:
     title: URL
     tooltip: Set the destination URL.
   Restart: restart
+  IntervalRestart:
+    title: Interval Restart
+    unit: minutes
+    tooltip: Restart the RTMP periodically.
 
 WebRTC:
   title: WebRTC
@@ -408,7 +431,7 @@ watermark:
     title: Logo
     image:
       title: PNG image
-      comment: Create and drop a PNG file within 500px x 100px.
+      comment: Create and drop a PNG file within 500px x 200px.
 
 maintenance:
   tab: Maintenance
@@ -478,10 +501,8 @@ schedule:
     - sun
 
 submit: Submit
-updating:
-  title: Updating
-  comment: Updating. Please wait a bit.
-rebooting:
-  title: Rebooting
-  comment: Wait until reboot has completed (approximately{rebootTime}sec)
-
+executing: Updating. Please wait a bit.
+erasing: Erasing SD-Card. Please wait a bit.
+downloading: Downloading now. Please wait a bit.
+downloadError: Download failed. Please give it some time and try again.
+rebooting: Wait until reboot has completed (approximately 80sec)
