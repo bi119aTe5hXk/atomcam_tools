@@ -278,12 +278,18 @@ ONVIF:
   password:
     title: パスワード
     tooltip: ONVIFのパスワードを設定します
+  mainStream:
+    title: Mainストリーム
+    tooltip: Main AVCとMain HEVCの両方が有効な場合に、ONVIFで優先して公開する1080pストリームを選択します
+    text:
+      - AVC
+      - HEVC
   allEventsAsMotion:
     title: すべてのイベントをモーションとして通知
     tooltip: NVR互換性のため、サウンド検出と警報音検出もモーションイベントとして通知します
   note:
     comment: |
-      ONVIFはRTSP Mainを使用します。設定保存時にRTSP Mainをonにします。
+      ONVIFは有効なRTSPストリームを公開します。RTSPストリームが選択されていない場合は、設定保存時にRTSP Mainをonにします。
 
 HomeKit:
   title: HomeKit

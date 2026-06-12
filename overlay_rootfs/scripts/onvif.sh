@@ -60,8 +60,8 @@ RTSP_VIDEO0=$(get_ini RTSP_VIDEO0)
 RTSP_AUDIO0=$(get_ini RTSP_AUDIO0)
 RTSP_VIDEO1=$(get_ini RTSP_VIDEO1)
 RTSP_VIDEO2=$(get_ini RTSP_VIDEO2)
-[ "$RTSP_VIDEO0" = "on" ] || {
-  log "onvif requires RTSP main stream"
+[ "$RTSP_VIDEO0" = "on" -o "$RTSP_VIDEO1" = "on" -o "$RTSP_VIDEO2" = "on" ] || {
+  log "onvif requires at least one RTSP stream"
   exit 0
 }
 
@@ -98,13 +98,33 @@ fi
 
 ONVIF_USER=$(get_ini ONVIF_USER)
 ONVIF_PASSWD=$(get_ini ONVIF_PASSWD)
+ONVIF_MAIN_STREAM=$(get_ini ONVIF_MAIN_STREAM)
+[ "$ONVIF_MAIN_STREAM" = "" ] && ONVIF_MAIN_STREAM=avc
 
-AUDIO_ENCODER=NONE
-if [ "$RTSP_AUDIO0" = "AAC" ]; then
-  AUDIO_ENCODER=AAC
-elif [ "$RTSP_AUDIO0" = "S16_BE" ]; then
-  AUDIO_ENCODER=G711
-fi
+audio_encoder()
+{
+  if [ "$1" = "AAC" ]; then
+    echo "AAC"
+  elif [ "$1" = "S16_BE" ]; then
+    echo "G711"
+  else
+    echo "NONE"
+  fi
+}
+
+profile_count=0
+emit_profile()
+{
+  profile_count=$((profile_count + 1))
+  echo "name=Profile_$((profile_count - 1))"
+  echo "width=$1"
+  echo "height=$2"
+  echo "url=rtsp://${AUTH}%s:$RTSP_PORT/$3"
+  echo "snapurl=http://%s/cgi-bin/get_jpeg.cgi"
+  echo "type=$4"
+  echo "audio_encoder=$(audio_encoder "$5")"
+  echo "audio_decoder=NONE"
+}
 
 PTZ=0
 if [ "$MODEL" = "ATOM_CAKP1JZJP" ]; then
@@ -130,14 +150,29 @@ fi
   echo "adv_fault_if_set=0"
   echo "adv_synology_nvr=1"
 
-  echo "name=Profile_0"
-  echo "width=1920"
-  echo "height=1080"
-  echo "url=rtsp://${AUTH}%s:$RTSP_PORT/video0_unicast"
-  echo "snapurl=http://%s/cgi-bin/get_jpeg.cgi"
-  echo "type=H264"
-  echo "audio_encoder=$AUDIO_ENCODER"
-  echo "audio_decoder=NONE"
+  if [ "$RTSP_VIDEO0" = "on" -a "$RTSP_VIDEO2" = "on" -a "$ONVIF_MAIN_STREAM" = "hevc" ]; then
+    emit_profile 1920 1080 video2_unicast H265 "$RTSP_AUDIO2"
+  elif [ "$RTSP_VIDEO0" = "on" ]; then
+    emit_profile 1920 1080 video0_unicast H264 "$RTSP_AUDIO0"
+  elif [ "$RTSP_VIDEO2" = "on" ]; then
+    emit_profile 1920 1080 video2_unicast H265 "$RTSP_AUDIO2"
+  fi
+
+  if [ "$RTSP_VIDEO1" = "on" -a "$profile_count" -lt 2 ]; then
+    if [ "$MODEL" = "ATOM_CamV3C" -o "$MODEL" = "AC1" -o "$MODEL" = "ATOM_CAKP1JZJP" ]; then
+      emit_profile 640 360 video1_unicast H265 "$RTSP_AUDIO1"
+    else
+      emit_profile 640 320 video1_unicast H264 "$RTSP_AUDIO1"
+    fi
+  fi
+
+  if [ "$RTSP_VIDEO2" = "on" -a "$RTSP_VIDEO0" = "on" -a "$RTSP_VIDEO1" != "on" -a "$profile_count" -lt 2 ]; then
+    if [ "$ONVIF_MAIN_STREAM" = "hevc" ]; then
+      emit_profile 1920 1080 video0_unicast H264 "$RTSP_AUDIO0"
+    else
+      emit_profile 1920 1080 video2_unicast H265 "$RTSP_AUDIO2"
+    fi
+  fi
 
   echo "ptz=$PTZ"
   if [ "$PTZ" = "1" ]; then
