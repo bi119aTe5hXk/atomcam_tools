@@ -79,9 +79,9 @@ chmod 666 $LOG $ONVIF_SERVER_LOG $WSD_SERVER_LOG $NOTIFY_SERVER_LOG > /dev/null 
 /scripts/rtspserver.sh on
 
 HOSTNAME=`hostname`
-MODEL=$(awk -F "=" '/^PRODUCT_MODEL=/ { print $2; exit }' /atom/configs/.product_config 2> /dev/null)
+MODEL=$(awk -F "=" '/^PRODUCT_MODEL *=/ { gsub(/^[ \t]+|[ \t]+$/, "", $2); print $2; exit }' /atom/configs/.product_config 2> /dev/null)
 [ "$MODEL" = "" ] && MODEL="ATOMCam"
-SERIAL=$(awk -F "=" '/^(CONFIG_INFO|NETRELATED_MAC)=/ { print $2; exit }' /atom/configs/.product_config 2> /dev/null)
+SERIAL=$(awk -F "=" '/^(CONFIG_INFO|NETRELATED_MAC) *=/ { gsub(/^[ \t]+|[ \t]+$/, "", $2); print $2; exit }' /atom/configs/.product_config 2> /dev/null)
 [ "$SERIAL" = "" ] && SERIAL="$HOSTNAME"
 
 RTSP_OVER_HTTP=$(get_ini RTSP_OVER_HTTP)

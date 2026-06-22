@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/time.h>
-#include <time.h>
 
 extern void Dump(const char *str, void *start, int size);
 extern char CommandResBuf[];
@@ -71,15 +70,6 @@ static CURLcode (*original_curl_easy_perform)(CURL *curl);
 int curl_minimum_alarm_cycle = 0;
 static int disable = 0;
 static int debug = 0;
-static time_t last_onvif_alarm_time = 0;
-
-static void OnvifAlarmEvent()
-{
-  time_t now = time(NULL);
-  if(now - last_onvif_alarm_time < 5) return;
-  last_onvif_alarm_time = now;
-  system("/scripts/onvif_event.sh trigger motion >/dev/null 2>&1 &");
-}
 
 static void __attribute ((constructor)) curl_hook_init(void) {
 
@@ -144,7 +134,6 @@ CURLcode curl_easy_perform(struct SessionHandle *data) {
 
   const char *alarmPath = wyze ? AlarmPathWyze : AlarmPathAtom;
   if(url && strlen(url) >= strlen(alarmPath) && !strcmp(url + strlen(url) - strlen(alarmPath), alarmPath)) {
-    OnvifAlarmEvent();
     static time_t lastAccess = 0;
     struct timeval now;
     gettimeofday(&now, NULL);
